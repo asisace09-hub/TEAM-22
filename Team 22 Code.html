@@ -1,0 +1,1023 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barangay Resident Information System</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      color: #000;
+    }
+    header {
+      background: #EBFFEE;
+      color: #000;
+      padding: 20px;
+    }
+    header h1 { margin: 0 0 5px; }
+    header p { margin: 0; }
+    .layout { display: flex; }
+    .sidebar {
+      width: 200px;
+      background: #4b7a45;
+      padding: 10px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar button {
+      display: block;
+      width: 100%;
+      margin-bottom: 5px;
+      padding: 12px;
+      border: none;
+      background: transparent;
+      color: white;
+      text-align: left;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .sidebar button:hover { background: #3a6335; }
+    .sidebar .logout-button { margin-top: auto; background: #315331; }
+    .sidebar .logout-button:hover { background: #263f26; }
+    main {
+      flex: 1;
+      padding: 20px;
+      overflow-x: auto;
+    }
+    .section { display: none; }
+    .section.active { display: block; }
+    .cards {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin: 15px 0;
+    }
+    .card {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      width: 170px;
+    }
+    .card strong { font-size: 28px; color: #2f855a; }
+    .panel {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 15px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      max-width: 400px;
+      padding: 9px;
+      margin-top: 4px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button.btn {
+      margin-top: 15px;
+      padding: 10px 18px;
+      background: #2f855a;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button.btn:hover { opacity: 0.9; }
+    button.red { background: #b91c1c; margin-left: 5px; }
+    button.edit { background: #f59e0b; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    th { background: #4b7a45; color: white; }
+    .empty { color: #777; padding: 15px; }
+    .message {
+      margin-top: 12px;
+      font-weight: bold;
+    }
+    .sidebar button.active { background: #3a6335; }
+    .sidebar .role-label { display: block; color: white; margin: 14px 0 4px; }
+    .sidebar select { width: 100%; }
+    .form-grid, .report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px 16px; }
+    .form-grid label { margin: 0; }
+    .form-grid input, .form-grid select, .form-grid textarea { max-width: none; }
+    .form-grid textarea { width: 100%; min-height: 70px; margin-top: 4px; }
+    .check-list { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+    .check-list label { display: flex; align-items: center; gap: 5px; margin: 0; }
+    .check-list input { width: auto; margin: 0; }
+    .table-wrap { overflow-x: auto; }
+    .report-card { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; }
+    .report-card h3 { margin-top: 0; }
+    .profile-photo { display: block; width: 140px; height: 140px; object-fit: cover; border-radius: 50%; margin-bottom: 15px; }
+    #residentProfile { margin-top: 20px; }
+    .profile-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr); gap: 15px; align-items: start; }
+    .profile-layout .panel { margin-top: 15px; }
+    .profile-preview { position: sticky; top: 15px; }
+    .profile-placeholder { display: grid; place-items: center; width: 140px; height: 140px; margin-bottom: 15px; border-radius: 50%; background: #e8f2e9; color: #4b7a45; font-size: 48px; }
+    @media (max-width: 850px) {
+      .profile-layout { grid-template-columns: 1fr; }
+      .profile-preview { position: static; }
+    }
+    .notice { color: #555; font-size: 0.9em; }
+    @media (max-width: 700px) {
+      .layout { display: block; }
+      .sidebar { width: 100%; min-height: auto; display: flex; flex-wrap: wrap; gap: 4px; }
+      .sidebar button { width: auto; }
+      .sidebar .logout-button { margin: 0; }
+      .sidebar .role-label { width: 100%; }
+      .sidebar select { max-width: 220px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🏘️ Barangay Resident Information System</h1>
+    <p>One Community, One Family</p>
+  </header>
+
+  <div class="layout">
+    <div class="sidebar">
+      <button type="button" data-section="dashboard" onclick="showSection('dashboard')">Dashboard</button>
+      <button type="button" data-section="add" onclick="showSection('add')">Resident Profile</button>
+      <button type="button" data-section="records" onclick="showSection('records')">Registered Residents</button>
+      <button type="button" data-section="households" onclick="openManager('households')">Households</button>
+      <button type="button" data-section="certificates" onclick="openManager('certificates')">Certificates & Clearances</button>
+      <button type="button" data-section="incidents" onclick="openManager('incidents')">Blotter / Incidents</button>
+      <button type="button" data-section="puroks" onclick="openManager('puroks')">Purok / Zones</button>
+      <button type="button" data-section="officials" onclick="openManager('officials')">Officials & Staff</button>
+      <button type="button" data-section="announcements" onclick="openManager('announcements')">Announcements & Activities</button>
+      <button type="button" data-section="reports" onclick="showSection('reports')">Population Reports</button>
+      <button type="button" data-section="myProfile" onclick="showSection('myProfile')">My Profile / Request</button>
+      <label class="role-label" for="roleView">Account role</label>
+      <select id="roleView" onchange="changeRole(this.value)">
+        <option value="admin">Admin / Captain</option>
+        <option value="staff">Secretary / Staff</option>
+        <option value="resident">Resident</option>
+      </select>
+      <button type="button" class="logout-button" onclick="logoutAndChangeAccount()">Log Out / Change Account</button>
+    </div>
+
+    <main>
+      <section id="dashboard" class="section active">
+        <h2>Dashboard</h2>
+        <div class="cards">
+          <div class="card"><h3>Total Residents</h3><strong id="totalCount">0</strong></div>
+          <div class="card"><h3>Male</h3><strong id="maleCount">0</strong></div>
+          <div class="card"><h3>Female</h3><strong id="femaleCount">0</strong></div>
+          <div class="card"><h3>Households</h3><strong id="householdCount">0</strong></div>
+          <div class="card"><h3>Senior Citizens</h3><strong id="seniorCount">0</strong></div>
+          <div class="card"><h3>PWD</h3><strong id="pwdCount">0</strong></div>
+          <div class="card"><h3>Voters</h3><strong id="voterCount">0</strong></div>
+        </div>
+        <div class="panel">
+          <h3>Quick Stats</h3>
+          <p style="margin-top:10px;">Data saved locally in your browser. Records persist after closing.</p>
+          <p class="notice">Role-based navigation is a demo feature and does not provide secure access control.</p>
+        </div>
+      </section>
+
+      <section id="add" class="section">
+        <h2 id="formTitle">Add New Resident</h2>
+        <div class="profile-layout">
+        <div class="panel">
+          <label>Resident ID *</label>
+          <input id="resId" placeholder="e.g. BRGY-001">
+          <label>Full Name (Last, First) *</label>
+          <input id="fullName" placeholder="Santos, Maria">
+          <label>Age * (calculated from birthdate when entered)</label>
+          <input type="number" id="age" min="0" max="120" step="1">
+          <label>Birthdate (optional)</label>
+          <input type="date" id="birthdate">
+          <small id="ageHint" class="notice">Enter an age, or enter a birthdate to calculate it automatically.</small>
+          <label>Gender *</label>
+          <select id="gender">
+            <option value="">-- Select --</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+          <label>Address / Purok *</label>
+          <input id="address" placeholder="Purok 2, Barangay...">
+          <label>Purok / Zone</label>
+          <input id="residentPurok" placeholder="Purok 2">
+          <label>Sitio</label>
+          <input id="sitio" placeholder="Sitio / village">
+          <label>Civil Status</label>
+          <select id="civilStatus">
+            <option value="Single">Single</option>
+            <option value="Married">Married</option>
+            <option value="Separated">Separated</option>
+            <option value="Widowed">Widowed</option>
+          </select>
+          <label>Contact Number</label>
+          <input id="contact" placeholder="09XX-XXX-XXXX">
+          <label>Email</label>
+          <input type="email" id="email" placeholder="name@example.com">
+          <label>Occupation</label>
+          <input id="occupation">
+          <label>Religion</label>
+          <input id="religion">
+          <label>Nationality</label>
+          <input id="nationality" value="Filipino">
+          <label>Household Number / House Number</label>
+          <input id="residentHousehold" placeholder="HH-001 / 12-A">
+          <label>Household Members</label>
+          <textarea id="familyMembers" placeholder="List household members"></textarea>
+          <label>Photo URL</label>
+          <input type="url" id="photoUrl" placeholder="https://...">
+          <label>Valid ID / document URL</label>
+          <input type="url" id="validIdUrl" placeholder="https://...">
+          <label>Tags</label>
+          <div class="check-list">
+            <label><input type="checkbox" id="isVoter"> Voter</label>
+            <label><input type="checkbox" id="isPwd"> PWD</label>
+            <label><input type="checkbox" id="isSenior"> Senior</label>
+            <label><input type="checkbox" id="is4ps"> 4Ps</label>
+            <label><input type="checkbox" id="isSoloParent"> Solo Parent</label>
+          </div>
+          <br>
+          <button class="btn" type="button" onclick="saveResident()">Save Resident</button>
+          <button class="btn" type="button" style="background:#666;" onclick="clearForm()">Clear</button>
+          <p id="msg" class="message"></p>
+        </div>
+        <aside class="panel profile-preview" aria-live="polite">
+          <h3>Profile Preview</h3>
+          <div id="registrationPreview"></div>
+        </aside>
+        </div>
+      </section>
+
+      <section id="records" class="section">
+        <h2>Registered Residents</h2>
+        <div class="panel" style="padding:10px 20px;">
+          <input type="text" id="search" placeholder="🔍 Search by Name, ID, or Address..." style="max-width:100%;margin-bottom:10px;">
+          <div class="table-wrap"><table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Full Name</th>
+                <th>Age</th>
+                <th>Gender</th>
+                <th>Address</th>
+                <th>Civil Status</th>
+                <th>Contact</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="resTable"></tbody>
+          </table></div>
+        </div>
+      </section>
+      <section id="manager" class="section">
+        <h2 id="managerTitle"></h2>
+        <div class="panel">
+          <form id="managerForm">
+            <div id="managerFields" class="form-grid"></div>
+            <button class="btn" type="submit">Save Record</button>
+            <button class="btn" type="button" style="background:#666;" onclick="resetManagerForm()">Clear</button>
+            <p id="managerMessage" class="message" role="status"></p>
+          </form>
+        </div>
+        <div class="panel table-wrap">
+          <table>
+            <thead id="managerHead"></thead>
+            <tbody id="managerBody"></tbody>
+          </table>
+        </div>
+      </section>
+      <section id="reports" class="section">
+        <h2>Population Reports & Statistics</h2>
+        <div class="report-grid">
+          <div class="report-card"><h3>By Purok</h3><div id="purokReport"></div></div>
+          <div class="report-card"><h3>By Age Group</h3><div id="ageReport"></div></div>
+          <div class="report-card"><h3>By Gender</h3><div id="genderReport"></div></div>
+          <div class="report-card"><h3>Voter Status</h3><div id="voterReport"></div></div>
+          <div class="report-card"><h3>Senior Citizens</h3><div id="seniorReport"></div></div>
+          <div class="report-card"><h3>PWD</h3><div id="pwdReport"></div></div>
+          <div class="report-card"><h3>Solo Parents</h3><div id="soloReport"></div></div>
+          <div class="report-card"><h3>Youth (SK, ages 15–30)</h3><div id="youthReport"></div></div>
+        </div>
+      </section>
+      <section id="myProfile" class="section">
+        <h2>My Resident Profile</h2>
+        <div class="panel">
+          <label for="residentChoice">Choose resident for demo preview</label>
+          <select id="residentChoice" onchange="showResidentProfile()"></select>
+          <div id="residentProfile"></div>
+        </div>
+        <div class="panel"> 
+          <h3>Request a Certificate</h3>
+          <label for="requestType">Certificate Type</label>
+          <select id="requestType">
+            <option>Barangay Clearance</option>
+            <option>Certificate of Residency</option>
+            <option>Certificate of Indigency</option>
+            <option>Business Permit</option>
+            <option>Cedula / Community Tax Certificate</option>
+          </select>
+          <button class="btn" type="button" onclick="requestCertificate()">Submit Request</button>
+          <p id="requestMessage" class="message" role="status"></p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "BarangayResidents";
+    const COLLECTIONS = {
+      households: {
+        title: "Household Management",
+        storageKey: "BarangayHouseholds",
+        fields: [
+          { key: "householdNumber", label: "Household Number", required: true },
+          { key: "houseNumber", label: "House Number" },
+          { key: "headOfFamily", label: "Head of Family", required: true },
+          { key: "totalMembers", label: "Total Members", type: "number" },
+          { key: "ownership", label: "Ownership", type: "select", options: ["Owned", "Rented", "Shared"] },
+          { key: "purok", label: "Purok / Zone" }
+        ]
+      },
+      certificates: {
+        title: "Certificates & Clearance Issuance",
+        storageKey: "BarangayCertificates",
+        fields: [
+          { key: "resident", label: "Resident Name", required: true },
+          { key: "type", label: "Certificate Type", type: "select", options: ["Barangay Clearance", "Certificate of Residency", "Certificate of Indigency", "Business Permit", "Cedula / Community Tax Certificate"] },
+          { key: "date", label: "Date Requested / Issued", type: "date" },
+          { key: "status", label: "Status", type: "select", options: ["Pending", "Released", "Expired"] },
+          { key: "releasedDate", label: "Release / Expiry Date", type: "date" },
+          { key: "notes", label: "Notes", type: "textarea" }
+        ]
+      },
+      incidents: {
+        title: "Blotter / Incident Records",
+        storageKey: "BarangayIncidents",
+        fields: [
+          { key: "complainant", label: "Complainant", required: true },
+          { key: "respondent", label: "Respondent", required: true },
+          { key: "type", label: "Incident Type", required: true },
+          { key: "date", label: "Date", type: "date" },
+          { key: "time", label: "Time", type: "time" },
+          { key: "location", label: "Location" },
+          { key: "status", label: "Status", type: "select", options: ["Ongoing", "Settled", "Referred to higher authority"] },
+          { key: "notes", label: "Mediation / Lupon Notes", type: "textarea" }
+        ]
+      },
+      puroks: {
+        title: "Purok / Zone Management",
+        storageKey: "BarangayPuroks",
+        fields: [
+          { key: "name", label: "Purok / Zone Name", required: true },
+          { key: "leader", label: "Purok Leader" },
+          { key: "contact", label: "Leader Contact" },
+          { key: "notes", label: "Notes", type: "textarea" }
+        ]
+      },
+      officials: {
+        title: "Officials & Staff",
+        storageKey: "BarangayOfficials",
+        fields: [
+          { key: "name", label: "Full Name", required: true },
+          { key: "position", label: "Position", type: "select", options: ["Barangay Captain", "Kagawad", "SK Chairperson", "SK Member", "Secretary", "Treasurer", "Staff"] },
+          { key: "termStart", label: "Term Start", type: "date" },
+          { key: "termEnd", label: "Term End", type: "date" },
+          { key: "contact", label: "Contact Number" }
+        ]
+      },
+      announcements: {
+        title: "Announcements, Activities & Assistance",
+        storageKey: "BarangayAnnouncements",
+        fields: [
+          { key: "title", label: "Project / Announcement", required: true },
+          { key: "category", label: "Category", type: "select", options: ["Announcement", "Clean-up Drive", "Meeting", "Project", "Ayuda Distribution"] },
+          { key: "date", label: "Date", type: "date" },
+          { key: "location", label: "Location" },
+          { key: "description", label: "Details / Distribution List", type: "textarea" }
+        ]
+      }
+    };
+
+    let residents = loadResidents();
+    let editIndex = null;
+    let managerEditIndex = null;
+    let activeCollection = null;
+    const assignedRole = sessionStorage.getItem("BarangayRole");
+    let currentRole = ["admin", "staff", "resident"].includes(assignedRole) ? assignedRole : "admin";
+
+    function loadResidents() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+
+        const saved = JSON.parse(raw);
+        if (!Array.isArray(saved)) return [];
+
+        return saved
+          .filter(Boolean)
+          .map((resident) => {
+            const calculatedAge = resident.birthdate ? calculateAge(String(resident.birthdate)) : null;
+            return {
+              ...resident,
+              resId: String(resident.resId || "").trim(),
+              fullName: String(resident.fullName || "").trim(),
+              age: calculatedAge ?? (Number(resident.age) || 0),
+              gender: resident.gender === "Female" ? "Female" : "Male",
+              address: String(resident.address || "").trim(),
+              civilStatus: String(resident.civilStatus || "Single"),
+              contact: String(resident.contact || "").trim(),
+              birthdate: String(resident.birthdate || ""),
+              purok: String(resident.purok || ""),
+              sitio: String(resident.sitio || ""),
+              email: String(resident.email || ""),
+              occupation: String(resident.occupation || ""),
+              religion: String(resident.religion || ""),
+              nationality: String(resident.nationality || "Filipino"),
+              household: String(resident.household || ""),
+              familyMembers: String(resident.familyMembers || ""),
+              photoUrl: String(resident.photoUrl || ""),
+              validIdUrl: String(resident.validIdUrl || ""),
+              isVoter: Boolean(resident.isVoter),
+              isPwd: Boolean(resident.isPwd),
+              isSenior: Boolean(resident.isSenior),
+              is4ps: Boolean(resident.is4ps),
+              isSoloParent: Boolean(resident.isSoloParent)
+            };
+          })
+          .filter((resident) => resident.resId && resident.fullName && resident.address);
+      } catch (error) {
+        console.warn("Failed to read saved residents:", error);
+        return [];
+      }
+    }
+
+    function saveStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(residents));
+    }
+
+    function showSection(name) {
+      if (!roleCanOpen(name)) {
+        alert("This section is not available in the selected demo role.");
+        return;
+      }
+      document.querySelectorAll(".section").forEach((section) => {
+        section.classList.toggle("active", section.id === name);
+      });
+      document.querySelectorAll(".sidebar button[data-section]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.section === name);
+      });
+    }
+
+    function roleCanOpen(name) {
+      if (currentRole === "admin") return true;
+      if (currentRole === "staff") return ["dashboard", "add", "records", "households", "certificates", "incidents"].includes(name);
+      return ["dashboard", "announcements", "myProfile"].includes(name);
+    }
+
+    function changeRole(role) {
+      currentRole = role;
+      document.querySelectorAll(".sidebar button[data-section]").forEach((button) => {
+        const section = button.dataset.section;
+        button.hidden = !roleCanOpen(section);
+      });
+      document.querySelector("#managerForm").closest(".panel").hidden =
+        currentRole === "resident" || (currentRole === "staff" && activeCollection?.storageKey === "BarangayIncidents");
+      fillResidentChoice();
+      showSection("dashboard");
+    }
+
+    function logoutAndChangeAccount() {
+      sessionStorage.removeItem("BarangayRole");
+      window.location.assign(new URL("login.html", document.baseURI).href);
+    }
+
+    function openManager(name) {
+      if (!roleCanOpen(name)) {
+        alert("This section is not available in the selected demo role.");
+        return;
+      }
+      activeCollection = COLLECTIONS[name];
+      if (!activeCollection) return;
+      resetManagerForm();
+      document.getElementById("managerTitle").textContent = activeCollection.title;
+      document.querySelectorAll(".sidebar button[data-section]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.section === name);
+      });
+      document.querySelectorAll(".section").forEach((section) => {
+        section.classList.toggle("active", section.id === "manager");
+      });
+      document.querySelector("#managerForm").closest(".panel").hidden =
+        currentRole === "resident" || (currentRole === "staff" && activeCollection.storageKey === "BarangayIncidents");
+      renderManager();
+    }
+
+    function loadCollection(collection) {
+      try {
+        const saved = JSON.parse(localStorage.getItem(collection.storageKey) || "[]");
+        return Array.isArray(saved) ? saved.filter((record) => record && typeof record === "object") : [];
+      } catch (error) {
+        console.warn(`Failed to read ${collection.title}:`, error);
+        return [];
+      }
+    }
+
+    function saveCollection(collection, records) {
+      localStorage.setItem(collection.storageKey, JSON.stringify(records));
+    }
+
+    function renderManager() {
+      if (!activeCollection) return;
+      const records = loadCollection(activeCollection);
+      const readOnly = currentRole === "resident" ||
+        (currentRole === "staff" && activeCollection.storageKey === "BarangayIncidents");
+      document.getElementById("managerHead").innerHTML =
+        `<tr>${activeCollection.fields.map((field) => `<th>${escapeHtml(field.label)}</th>`).join("")}${readOnly ? "" : "<th>Actions</th>"}</tr>`;
+      const body = document.getElementById("managerBody");
+      if (!records.length) {
+        body.innerHTML = `<tr><td colspan="${activeCollection.fields.length + (readOnly ? 0 : 1)}" class="empty">No records yet.</td></tr>`;
+        return;
+      }
+      body.innerHTML = records.map((record, index) => `
+        <tr>${activeCollection.fields.map((field) => `<td>${escapeHtml(record[field.key] || "-")}</td>`).join("")}
+          ${readOnly ? "" : `<td><button class="btn edit" type="button" data-action="edit" data-index="${index}">Edit</button>
+          <button class="btn red" type="button" data-action="delete" data-index="${index}">Delete</button></td>`}
+        </tr>`).join("");
+    }
+
+    function buildManagerForm() {
+      const fields = document.getElementById("managerFields");
+      fields.innerHTML = activeCollection.fields.map((field) => {
+        const required = field.required ? " required" : "";
+        let control;
+        if (field.type === "select") {
+          control = `<select id="manager-${field.key}"${required}><option value="">-- Select --</option>${field.options.map((option) => `<option>${escapeHtml(option)}</option>`).join("")}</select>`;
+        } else if (field.type === "textarea") {
+          control = `<textarea id="manager-${field.key}"${required}></textarea>`;
+        } else {
+          control = `<input id="manager-${field.key}" type="${field.type || "text"}"${required}>`;
+        }
+        return `<label>${escapeHtml(field.label)}${required ? " *" : ""}${control}</label>`;
+      }).join("");
+    }
+
+    function resetManagerForm() {
+      managerEditIndex = null;
+      const form = document.getElementById("managerForm");
+      if (form) form.reset();
+      const message = document.getElementById("managerMessage");
+      if (message) message.textContent = "";
+      if (activeCollection) buildManagerForm();
+    }
+
+    function saveManagerRecord(event) {
+      event.preventDefault();
+      if (!activeCollection) return;
+      const record = {};
+      for (const field of activeCollection.fields) {
+        const input = document.getElementById(`manager-${field.key}`);
+        record[field.key] = input.value.trim();
+        if (field.required && !record[field.key]) {
+          document.getElementById("managerMessage").textContent = `⚠️ ${field.label} is required.`;
+          document.getElementById("managerMessage").style.color = "#b91c1c";
+          input.focus();
+          return;
+        }
+      }
+      const records = loadCollection(activeCollection);
+      if (managerEditIndex === null) records.push(record);
+      else records[managerEditIndex] = record;
+      saveCollection(activeCollection, records);
+      resetManagerForm();
+      document.getElementById("managerMessage").textContent = "✅ Record saved.";
+      document.getElementById("managerMessage").style.color = "#2f855a";
+      renderManager();
+      showAll();
+    }
+
+    function handleManagerAction(event) {
+      const button = event.target.closest("button[data-action]");
+      if (!button || !activeCollection) return;
+      const index = Number(button.dataset.index);
+      const records = loadCollection(activeCollection);
+      if (!Number.isInteger(index) || !records[index]) return;
+      if (button.dataset.action === "edit") {
+        managerEditIndex = index;
+        buildManagerForm();
+        activeCollection.fields.forEach((field) => {
+          document.getElementById(`manager-${field.key}`).value = records[index][field.key] || "";
+        });
+        document.getElementById("managerMessage").textContent = "Editing record.";
+      } else if (button.dataset.action === "delete" && confirm("Delete this record?")) {
+        records.splice(index, 1);
+        saveCollection(activeCollection, records);
+        renderManager();
+        showAll();
+      }
+    }
+
+    function escapeHtml(text) {
+      return String(text ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    function setMessage(message, isError = false) {
+      const msg = document.getElementById("msg");
+      msg.textContent = message;
+      msg.style.color = isError ? "#b91c1c" : "#2f855a";
+    }
+
+    function clearForm() {
+      document.getElementById("resId").value = "";
+      document.getElementById("fullName").value = "";
+      document.getElementById("age").value = "";
+      document.getElementById("gender").value = "";
+      document.getElementById("address").value = "";
+      document.getElementById("civilStatus").value = "Single";
+      document.getElementById("contact").value = "";
+      ["birthdate", "residentPurok", "sitio", "email", "occupation", "religion",
+        "residentHousehold", "familyMembers", "photoUrl", "validIdUrl"].forEach((id) => {
+        document.getElementById(id).value = "";
+      });
+      document.getElementById("age").readOnly = false;
+      document.getElementById("ageHint").textContent = "Enter an age, or enter a birthdate to calculate it automatically.";
+      document.getElementById("nationality").value = "Filipino";
+      ["isVoter", "isPwd", "isSenior", "is4ps", "isSoloParent"].forEach((id) => {
+        document.getElementById(id).checked = false;
+      });
+      editIndex = null;
+      document.getElementById("formTitle").textContent = "Add New Resident";
+      setMessage("");
+      updateRegistrationPreview();
+    }
+
+    function getWebUrl(value) {
+      if (!value) return "";
+      try {
+        const url = new URL(value, document.baseURI);
+        return url.protocol === "http:" || url.protocol === "https:" ? url.href : "";
+      } catch (error) {
+        return "";
+      }
+    }
+
+    function updateRegistrationPreview() {
+      const value = (id) => document.getElementById(id).value.trim();
+      const name = value("fullName") || "Resident Name";
+      const photoUrl = getWebUrl(value("photoUrl"));
+      const validIdUrl = getWebUrl(value("validIdUrl"));
+      const tags = [
+        ["isVoter", "Voter"], ["isPwd", "PWD"], ["isSenior", "Senior"],
+        ["is4ps", "4Ps"], ["isSoloParent", "Solo Parent"]
+      ].filter(([id]) => document.getElementById(id).checked).map(([, tag]) => tag);
+      const photo = photoUrl
+        ? `<img class="profile-photo" src="${escapeHtml(photoUrl)}" alt="Photo of ${escapeHtml(name)}">`
+        : `<div class="profile-placeholder" aria-hidden="true">${escapeHtml(name.charAt(0).toUpperCase())}</div>`;
+      const info = (label, content) => `<p><strong>${label}:</strong> ${escapeHtml(content || "-")}</p>`;
+
+      document.getElementById("registrationPreview").innerHTML = `${photo}
+        <h3>${escapeHtml(name)}</h3>
+        ${info("Resident ID", value("resId"))}
+        ${info("Age / Birthdate", [value("age"), value("birthdate")].filter(Boolean).join(" / "))}
+        ${info("Gender / Civil Status", [value("gender"), value("civilStatus")].filter(Boolean).join(" / "))}
+        ${info("Address", [value("address"), value("residentPurok"), value("sitio")].filter(Boolean).join(", "))}
+        ${info("Contact", value("contact"))}
+        ${info("Email", value("email"))}
+        ${info("Occupation", value("occupation"))}
+        ${info("Religion / Nationality", [value("religion"), value("nationality")].filter(Boolean).join(" / "))}
+        ${info("Household", value("residentHousehold"))}
+        ${info("Household Members", value("familyMembers"))}
+        ${info("Tags", tags.join(", "))}
+        <p><strong>Valid ID:</strong> ${validIdUrl ? `<a href="${escapeHtml(validIdUrl)}" target="_blank" rel="noopener noreferrer">View document</a>` : "Not provided"}</p>`;
+    }
+
+    function saveResident() {
+      const resId = document.getElementById("resId").value.trim();
+      const fullName = document.getElementById("fullName").value.trim();
+      const ageValue = document.getElementById("age").value.trim();
+      const gender = document.getElementById("gender").value;
+      const address = document.getElementById("address").value.trim();
+      const civilStatus = document.getElementById("civilStatus").value;
+      const contact = document.getElementById("contact").value.trim();
+      const birthdate = document.getElementById("birthdate").value;
+      const age = birthdate ? calculateAge(birthdate) : Number(ageValue);
+      const residentPurok = document.getElementById("residentPurok").value.trim();
+
+      if (!resId || !fullName || (!birthdate && !ageValue) || !gender || !address) {
+        setMessage("⚠️ Fill in all required fields.", true);
+        return;
+      }
+
+      if (!Number.isInteger(age) || age < 0 || age > 120) {
+        setMessage(birthdate
+          ? "⚠️ Enter a valid birthdate that is not in the future."
+          : "⚠️ Age must be a whole number between 0 and 120.", true);
+        return;
+      }
+
+      const record = {
+        resId,
+        fullName,
+        age,
+        gender,
+        address,
+        civilStatus,
+        contact,
+        birthdate,
+        purok: residentPurok,
+        sitio: document.getElementById("sitio").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        occupation: document.getElementById("occupation").value.trim(),
+        religion: document.getElementById("religion").value.trim(),
+        nationality: document.getElementById("nationality").value.trim(),
+        household: document.getElementById("residentHousehold").value.trim(),
+        familyMembers: document.getElementById("familyMembers").value.trim(),
+        photoUrl: document.getElementById("photoUrl").value.trim(),
+        validIdUrl: document.getElementById("validIdUrl").value.trim(),
+        isVoter: document.getElementById("isVoter").checked,
+        isPwd: document.getElementById("isPwd").checked,
+        isSenior: document.getElementById("isSenior").checked,
+        is4ps: document.getElementById("is4ps").checked,
+        isSoloParent: document.getElementById("isSoloParent").checked
+      };
+
+      const duplicateIndex = residents.findIndex((resident, index) => {
+        if (index === editIndex) return false;
+        return resident.resId.toLowerCase() === resId.toLowerCase();
+      });
+
+      if (duplicateIndex !== -1) {
+        setMessage("⚠️ Resident ID already exists.", true);
+        return;
+      }
+
+      let successMessage;
+      if (editIndex !== null) {
+        residents[editIndex] = record;
+        successMessage = "✅ Record updated.";
+      } else {
+        residents.push(record);
+        successMessage = "✅ Resident added successfully.";
+      }
+
+      saveStorage();
+      showAll();
+      clearForm();
+      setMessage(successMessage);
+    }
+
+    function editResident(index) {
+      const resident = residents[index];
+      if (!resident) return;
+
+      document.getElementById("resId").value = resident.resId;
+      document.getElementById("fullName").value = resident.fullName;
+      document.getElementById("age").value = resident.age;
+      document.getElementById("gender").value = resident.gender;
+      document.getElementById("address").value = resident.address;
+      document.getElementById("civilStatus").value = resident.civilStatus || "Single";
+      document.getElementById("contact").value = resident.contact || "";
+      document.getElementById("birthdate").value = resident.birthdate || "";
+      document.getElementById("age").value = resident.age;
+      updateAgeFromBirthdate();
+      document.getElementById("residentPurok").value = resident.purok || "";
+      document.getElementById("sitio").value = resident.sitio || "";
+      document.getElementById("email").value = resident.email || "";
+      document.getElementById("occupation").value = resident.occupation || "";
+      document.getElementById("religion").value = resident.religion || "";
+      document.getElementById("nationality").value = resident.nationality || "Filipino";
+      document.getElementById("residentHousehold").value = resident.household || "";
+      document.getElementById("familyMembers").value = resident.familyMembers || "";
+      document.getElementById("photoUrl").value = resident.photoUrl || "";
+      document.getElementById("validIdUrl").value = resident.validIdUrl || "";
+      ["isVoter", "isPwd", "isSenior", "is4ps", "isSoloParent"].forEach((key) => {
+        document.getElementById(key).checked = Boolean(resident[key]);
+      });
+      updateRegistrationPreview();
+      editIndex = index;
+      document.getElementById("formTitle").textContent = "Edit Resident Record";
+      showSection("add");
+    }
+
+    function deleteResident(index) {
+      const resident = residents[index];
+      if (!resident) return;
+
+      if (confirm(`Delete resident: ${resident.fullName}?`)) {
+        residents.splice(index, 1);
+        saveStorage();
+        showAll();
+      }
+    }
+
+    function showDashboard() {
+      const male = residents.filter((resident) => resident.gender === "Male").length;
+      const female = residents.filter((resident) => resident.gender === "Female").length;
+      const registeredHouseholds = loadCollection(COLLECTIONS.households).length;
+      const households = registeredHouseholds || new Set(residents.map((resident) => resident.household || resident.address)).size;
+      const senior = residents.filter((resident) => resident.isSenior || resident.age >= 60).length;
+      const pwd = residents.filter((resident) => resident.isPwd).length;
+      const voters = residents.filter((resident) => resident.isVoter).length;
+
+      document.getElementById("totalCount").textContent = residents.length;
+      document.getElementById("maleCount").textContent = male;
+      document.getElementById("femaleCount").textContent = female;
+      document.getElementById("householdCount").textContent = households;
+      document.getElementById("seniorCount").textContent = senior;
+      document.getElementById("pwdCount").textContent = pwd;
+      document.getElementById("voterCount").textContent = voters;
+    }
+
+    function showRecords() {
+      const search = document.getElementById("search").value.trim().toLowerCase();
+      const filtered = residents.filter((resident) => {
+        const values = [resident.fullName, resident.resId, resident.address];
+        return values.some((value) => value.toLowerCase().includes(search));
+      });
+
+      const tbody = document.getElementById("resTable");
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="empty">No records found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered
+        .map((resident) => {
+          const idx = residents.indexOf(resident);
+          return `
+            <tr>
+              <td>${escapeHtml(resident.resId)}</td>
+              <td>${escapeHtml(resident.fullName)}</td>
+              <td>${resident.age}</td>
+              <td>${resident.gender}</td>
+              <td>${escapeHtml(resident.address)}</td>
+              <td>${escapeHtml(resident.civilStatus || "Single")}</td>
+              <td>${escapeHtml(resident.contact || "-")}</td>
+              <td>
+                <button class="btn edit" type="button" onclick="editResident(${idx})">Edit</button>
+                <button class="btn red" type="button" onclick="deleteResident(${idx})">Delete</button>
+              </td>
+            </tr>
+          `;
+        })
+        .join("");
+    }
+
+    function showAll() {
+      showDashboard();
+      showRecords();
+      showReports();
+    }
+
+    function calculateAge(date) {
+      const [year, month, day] = date.split("-").map(Number);
+      const birth = new Date(year, month - 1, day);
+      const today = new Date();
+      if (!year || birth.getFullYear() !== year || birth.getMonth() !== month - 1 ||
+          birth.getDate() !== day || birth > new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
+        return null;
+      }
+      let age = today.getFullYear() - birth.getFullYear();
+      if (today.getMonth() < birth.getMonth() ||
+          (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
+      return age;
+    }
+
+    function updateAgeFromBirthdate() {
+      const birthdate = document.getElementById("birthdate").value;
+      const ageInput = document.getElementById("age");
+      const hint = document.getElementById("ageHint");
+      ageInput.readOnly = Boolean(birthdate);
+      if (!birthdate) {
+        hint.textContent = "Enter an age, or enter a birthdate to calculate it automatically.";
+        return;
+      }
+
+      const age = calculateAge(birthdate);
+      if (age === null) {
+        ageInput.value = "";
+        hint.textContent = "Birthdate must be valid and cannot be in the future.";
+        return;
+      }
+
+      ageInput.value = age;
+      hint.textContent = "Age is calculated from the birthdate.";
+      updateRegistrationPreview();
+    }
+
+    function showReports() {
+      const countBy = (values) => Object.entries(values.reduce((counts, value) => {
+        const key = value || "Not specified";
+        counts[key] = (counts[key] || 0) + 1;
+        return counts;
+      }, {})).sort(([a], [b]) => a.localeCompare(b));
+      const renderCounts = (elementId, entries) => {
+        document.getElementById(elementId).innerHTML = entries.length
+          ? entries.map(([label, count]) => `<p>${escapeHtml(label)}: <strong>${count}</strong></p>`).join("")
+          : "<p>No records.</p>";
+      };
+      const purokCounts = countBy(residents.map((resident) => resident.purok ||
+        (resident.address.match(/purok\s*\d*/i) || ["Not specified"])[0]));
+      const ageGroup = (age) => age <= 14 ? "0-14" : age <= 30 ? "15-30 (Youth / SK)" : age <= 59 ? "31-59" : "60+";
+      renderCounts("purokReport", purokCounts);
+      renderCounts("ageReport", countBy(residents.map((resident) => ageGroup(resident.age))));
+      renderCounts("genderReport", countBy(residents.map((resident) => resident.gender)));
+      renderCounts("voterReport", [["Voters", residents.filter((resident) => resident.isVoter).length],
+        ["Non-voters", residents.filter((resident) => !resident.isVoter).length]]);
+      const residentList = (list) => list.length ? `<ul>${list.map((resident) => `<li>${escapeHtml(resident.fullName)}</li>`).join("")}</ul>` : "<p>None recorded.</p>";
+      document.getElementById("seniorReport").innerHTML = residentList(residents.filter((resident) => resident.isSenior || resident.age >= 60));
+      document.getElementById("pwdReport").innerHTML = residentList(residents.filter((resident) => resident.isPwd));
+      document.getElementById("soloReport").innerHTML = residentList(residents.filter((resident) => resident.isSoloParent));
+      document.getElementById("youthReport").innerHTML = residentList(residents.filter((resident) => resident.age >= 15 && resident.age <= 30));
+    }
+
+    function fillResidentChoice() {
+      const choice = document.getElementById("residentChoice");
+      const previous = choice.value;
+      choice.innerHTML = residents.length
+        ? residents.map((resident) => `<option value="${escapeHtml(resident.resId)}">${escapeHtml(resident.fullName)} (${escapeHtml(resident.resId)})</option>`).join("")
+        : '<option value="">No resident records</option>';
+      if (residents.some((resident) => resident.resId === previous)) choice.value = previous;
+      showResidentProfile();
+    }
+
+    function showResidentProfile() {
+      const resident = residents.find((item) => item.resId === document.getElementById("residentChoice").value);
+      const target = document.getElementById("residentProfile");
+      if (!resident) {
+        target.innerHTML = "<p>No resident profile is available yet.</p>";
+        return;
+      }
+      let photo = "";
+      if (resident.photoUrl) {
+        try {
+          const photoUrl = new URL(resident.photoUrl, document.baseURI);
+          if (photoUrl.protocol === "http:" || photoUrl.protocol === "https:") {
+            photo = `<img class="profile-photo" src="${escapeHtml(photoUrl.href)}" alt="Photo of ${escapeHtml(resident.fullName)}">`;
+          }
+        } catch (error) {
+          console.warn("Invalid resident photo URL:", error);
+        }
+      }
+      target.innerHTML = `${photo}<h3>${escapeHtml(resident.fullName)}</h3>
+        <p><strong>Birthdate / Age:</strong> ${escapeHtml(resident.birthdate || "Not specified")} / ${resident.age}</p>
+        <p><strong>Gender / Civil Status:</strong> ${escapeHtml(resident.gender)} / ${escapeHtml(resident.civilStatus)}</p>
+        <p><strong>Address:</strong> ${escapeHtml(resident.address)} ${escapeHtml(resident.sitio)}</p>
+        <p><strong>Contact / Email:</strong> ${escapeHtml(resident.contact || "-")} / ${escapeHtml(resident.email || "-")}</p>
+        <p><strong>Tags:</strong> ${["Voter", "PWD", "Senior", "4Ps", "Solo Parent"].filter((label, index) => [resident.isVoter, resident.isPwd, resident.isSenior, resident.is4ps, resident.isSoloParent][index]).join(", ") || "None"}</p>`;
+    }
+
+    function requestCertificate() {
+      const resident = residents.find((item) => item.resId === document.getElementById("residentChoice").value);
+      const message = document.getElementById("requestMessage");
+      if (!resident) {
+        message.textContent = "Add a resident profile before submitting a request.";
+        message.style.color = "#b91c1c";
+        return;
+      }
+      const collection = COLLECTIONS.certificates;
+      const records = loadCollection(collection);
+      records.push({
+        resident: resident.fullName,
+        type: document.getElementById("requestType").value,
+        date: new Date().toISOString().slice(0, 10),
+        status: "Pending",
+        releasedDate: "",
+        notes: "Requested through resident demo view"
+      });
+      saveCollection(collection, records);
+      message.textContent = "✅ Request submitted as Pending.";
+      message.style.color = "#2f855a";
+    }
+
+    document.getElementById("search").addEventListener("input", showRecords);
+    document.querySelectorAll("#add input, #add select, #add textarea").forEach((field) => {
+      field.addEventListener("input", updateRegistrationPreview);
+      field.addEventListener("change", updateRegistrationPreview);
+    });
+    document.getElementById("birthdate").addEventListener("input", updateAgeFromBirthdate);
+    document.getElementById("managerForm").addEventListener("submit", saveManagerRecord);
+    document.getElementById("managerBody").addEventListener("click", handleManagerAction);
+    const roleView = document.getElementById("roleView");
+    roleView.value = currentRole;
+    roleView.disabled = Boolean(assignedRole && assignedRole !== "all");
+    changeRole(currentRole);
+    showAll();
+    updateRegistrationPreview();
+  </script>
+</body>
+</html>
